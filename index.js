@@ -70,12 +70,19 @@ async function run() {
       res.send(result);
     });
     // find if user is buyer
-    app.get("/users/buyer/:email", async(req, res) => {
+    app.get("/users/buyer/:email", async (req, res) => {
       const email = req.params.email;
-      const query = {email};
-      const user = await usersCollection.findOne(query)
-      res.send({isBuyer: user?.userRole === "Buyer"})
-    })
+      const query = { email };
+      const user = await usersCollection.findOne(query);
+      res.send({ isBuyer: user?.userRole === "Buyer" });
+    });
+    // find if user is a seller
+    app.get("/users/seller/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const user = await usersCollection.findOne(query);
+      res.send({ isSeller: user?.userRole === "Seller" });
+    });
     app.get("/categories", async (req, res) => {
       const query = {};
       const categories = await categoriesCollection.find(query).toArray();
