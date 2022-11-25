@@ -69,6 +69,13 @@ async function run() {
       const result = await usersCollection.insertOne(user);
       res.send(result);
     });
+    // find if user is buyer
+    app.get("/users/buyer/:email", async(req, res) => {
+      const email = req.params.email;
+      const query = {email};
+      const user = await usersCollection.findOne(query)
+      res.send({isBuyer: user?.userRole === "Buyer"})
+    })
     app.get("/categories", async (req, res) => {
       const query = {};
       const categories = await categoriesCollection.find(query).toArray();
