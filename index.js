@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 const port = process.env.port || 5000;
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
 const { query } = require("express");
@@ -26,6 +26,12 @@ async function run() {
     const usersCollection = client
       .db("framework-peddler-db")
       .collection("users");
+    const productsCollection = client
+      .db("framework-peddler-db")
+      .collection("products");
+    const ordersCollection = client
+      .db("framework-peddler-db")
+      .collection("orders");
 
     app.get("/jwt", async (req, res) => {
       const email = req.query.email;
@@ -51,6 +57,37 @@ async function run() {
       const categories = await categoriesCollection.find(query).toArray();
       res.send(categories);
     });
+    app.get("/category/:id", async (req, res) => {
+      const id = req.params.id;
+      // console.log(id);
+      const query = { category_id: id };
+      const products = await productsCollection.find(query).toArray();
+      res.send(products);
+    });
+    app.post("/orders", async (req, res) => {
+      const order = req.body;
+      const result = await ordersCollection.insertOne(order); 
+      res.send(result);
+    });
+    
+    // temporary to update any field on products collections
+    // app.get("/addBookingConfirmaton", async (req, res) => {
+    //   const filter = {};
+    //   const options = { upsert: true };
+    //   const updatedDoc = {
+    //     $set: {
+    //       isBooked: false,
+    //     },
+    //   };
+    //   const result = await productsCollection.updateMany(
+    //     filter,
+    //     updatedDoc,
+    //     options
+    //   );
+    //   res.send(result);
+    // });
+
+
   } finally {
   }
 }
