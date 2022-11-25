@@ -18,6 +18,23 @@ const client = new MongoClient(uri, {
   serverApi: ServerApiVersion.v1,
 });
 
+//* verify JWT
+function verifyJWT(req, res, next) {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    return res.status(401).send("unauthorized access");
+  }
+  const token = authHeader.split(" ")[1];
+  jwt.verify(token, process.env.ACCESS_TOKEN, function (err, decoded) {
+    if (err) {
+      return res.status(403).send({ message: "forbidden access" });
+    }
+    req.decoded = decoded;
+    next();
+  });
+}
+
 async function run() {
   try {
     const categoriesCollection = client
@@ -66,10 +83,20 @@ async function run() {
     });
     app.post("/orders", async (req, res) => {
       const order = req.body;
-      const result = await ordersCollection.insertOne(order); 
+      const result = await ordersCollection.insertOne(order);
       res.send(result);
     });
-    
+    app.get("/orders", async (req, res) => {
+      const email = req.query.email;
+      // const decodedEmail = req.decoded.email;
+      // if (email !== decodedEmail) {
+      //   return res.status(403).send({ message: "forbidden access" });
+      // }
+      const query = { email: email };
+      const orders = await ordersCollection.find(query).toArray();
+      res.send(orders);
+    });
+
     // temporary to update any field on products collections
     // app.get("/addBookingConfirmaton", async (req, res) => {
     //   const filter = {};
@@ -86,8 +113,6 @@ async function run() {
     //   );
     //   res.send(result);
     // });
-
-
   } finally {
   }
 }
