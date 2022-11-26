@@ -63,7 +63,7 @@ async function run() {
     };
     app.get("/jwt", async (req, res) => {
       const email = req.query.email;
-      console.log(email);
+      // console.log(email);
       const query = { email: email };
       const user = await usersCollection.findOne(query);
       if (user) {
@@ -76,11 +76,13 @@ async function run() {
     });
     app.post("/users", async (req, res) => {
       const user = req.body;
-      // console.log(user);
-      const result = await usersCollection.insertOne(user);
+      let userData = { ...user };
+      if (user.userRole === "Seller") {
+        userData = { ...user, isSellerVerified: false };
+      }
+      const result = await usersCollection.insertOne(userData);
       res.send(result);
     });
-    // find if user is buyer
     app.get("/users/buyer/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email };
@@ -92,7 +94,8 @@ async function run() {
       const email = req.params.email;
       const query = { email };
       const user = await usersCollection.findOne(query);
-      res.send({ isSeller: user?.userRole === "Seller" });
+      console.log(user);
+      res.send({ isSeller: user?.userRole === "Seller", user : user });
     });
     // find if the is an admin
     app.get("/users/admin/:email", async (req, res) => {
@@ -156,12 +159,12 @@ async function run() {
       res.send(allsellers);
     });
     // temporary to update any field on products collections
-    // app.get("/addBookingConfirmaton", async (req, res) => {
+    // app.get("/users", async (req, res) => {
     //   const filter = {};
     //   const options = { upsert: true };
     //   const updatedDoc = {
     //     $set: {
-    //       isBooked: false,
+    //       isVerified: false,
     //     },
     //   };
     //   const result = await productsCollection.updateMany(
