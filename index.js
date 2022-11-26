@@ -117,7 +117,12 @@ async function run() {
       const orders = await ordersCollection.find(query).toArray();
       res.send(orders);
     });
-
+    app.post("/products", async (req, res) => {
+      const product = req.body;
+      console.log(product);
+      const result = await productsCollection.insertOne(product);
+      res.send(result);
+    });
     // temporary to update any field on products collections
     // app.get("/addBookingConfirmaton", async (req, res) => {
     //   const filter = {};
