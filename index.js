@@ -28,7 +28,9 @@ function verifyJWT(req, res, next) {
   const token = authHeader.split(" ")[1];
   jwt.verify(token, process.env.ACCESS_TOKEN, function (err, decoded) {
     if (err) {
-      return res.status(403).send({ message: "forbidden access" });
+      return res
+        .status(403)
+        .send({ message: "from verify JWT -> forbidden access" });
     }
     req.decoded = decoded;
     next();
@@ -50,6 +52,17 @@ async function run() {
       .db("framework-peddler-db")
       .collection("orders");
 
+    const verifySeller = async (req, res, next) => {
+      const decodedEmail = req.decoded.email;
+      const query = { email: decodedEmail };
+      const user = await usersCollection.findOne(query);
+      if (user?.userRole !== "Seller") {
+        return res
+          .status(403)
+          .send({ message: "from verify JWT -> forbidden access" });
+      }
+      next();
+    };
     app.get("/jwt", async (req, res) => {
       const email = req.query.email;
       console.log(email);
@@ -117,7 +130,19 @@ async function run() {
       const orders = await ordersCollection.find(query).toArray();
       res.send(orders);
     });
-    app.post("/products", async (req, res) => {
+    app.get("/products", async (req, res) => {
+      const email = req.query.email;
+      // console.log(email);
+      // const decodedEmail = req.decoded.email;
+      // if (email !== decodedEmail) {
+      //   return res.status(403).send({ message: "forbidden access" });
+      // }
+      const query = { seller_email: email };
+      const products = await productsCollection.find(query).toArray();
+      res.send(products);
+      
+    });
+    app.post("/products", verifyJWT, verifySeller, async (req, res) => {
       const product = req.body;
       console.log(product);
       const result = await productsCollection.insertOne(product);
