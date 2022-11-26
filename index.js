@@ -57,9 +57,7 @@ async function run() {
       const query = { email: decodedEmail };
       const user = await usersCollection.findOne(query);
       if (user?.userRole !== "Seller") {
-        return res
-          .status(403)
-          .send({ message: "from verify JWT -> forbidden access" });
+        return res.status(403).send({ message: "forbidden access" });
       }
       next();
     };
@@ -140,13 +138,22 @@ async function run() {
       const query = { seller_email: email };
       const products = await productsCollection.find(query).toArray();
       res.send(products);
-      
     });
     app.post("/products", verifyJWT, verifySeller, async (req, res) => {
       const product = req.body;
       console.log(product);
       const result = await productsCollection.insertOne(product);
       res.send(result);
+    });
+    app.get("/users/allbuyers", async (req, res) => {
+      const query = { userRole: "Buyer" };
+      const allbuyers = await usersCollection.find(query).toArray();
+      res.send(allbuyers);
+    });
+    app.get("/users/allsellers", async (req, res) => {
+      const query = { userRole: "Seller" };
+      const allsellers = await usersCollection.find(query).toArray();
+      res.send(allsellers);
     });
     // temporary to update any field on products collections
     // app.get("/addBookingConfirmaton", async (req, res) => {
