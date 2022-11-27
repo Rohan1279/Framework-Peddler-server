@@ -94,8 +94,8 @@ async function run() {
       const email = req.params.email;
       const query = { email };
       const user = await usersCollection.findOne(query);
-      console.log(user);
-      res.send({ isSeller: user?.userRole === "Seller", user : user });
+      // console.log(user);
+      res.send({ isSeller: user?.userRole === "Seller", user: user });
     });
     // find if the is an admin
     app.get("/users/admin/:email", async (req, res) => {
@@ -144,7 +144,7 @@ async function run() {
     });
     app.post("/products", verifyJWT, verifySeller, async (req, res) => {
       const product = req.body;
-      console.log(product);
+      // console.log(product);
       const result = await productsCollection.insertOne(product);
       res.send(result);
     });
@@ -157,6 +157,25 @@ async function run() {
       const query = { userRole: "Seller" };
       const allsellers = await usersCollection.find(query).toArray();
       res.send(allsellers);
+    });
+    //update a seller
+    app.put("/users/allsellers/seller/:email", async (req, res) => {
+      const email = req.params.email;
+      // console.log(email);
+      const filter = { email: email };
+      const options = { upsert: true };
+      const updatedDoc = {
+        $set: {
+          isSellerVerified: true,
+        },
+      };
+      const result = await usersCollection.updateOne(
+        filter,
+        updatedDoc,
+        options
+      );
+      console.log(result)
+      res.send(result);
     });
     // temporary to update any field on products collections
     // app.get("/users", async (req, res) => {
