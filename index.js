@@ -21,7 +21,6 @@ const client = new MongoClient(uri, {
 //* verify JWT
 function verifyJWT(req, res, next) {
   const authHeader = req.headers.authorization;
-
   if (!authHeader) {
     return res.status(401).send("unauthorized access");
   }
@@ -61,6 +60,15 @@ async function run() {
       }
       next();
     };
+    const verifyAdmin = async (req, res, next) => {
+      const decodedEmail = req.decoded.email;
+      const query = { email: decodedEmail };
+      const user = await usersCollection.findOne(query);
+      if (user?.userRole !== "Admin") {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+      next();
+    };
     app.get("/jwt", async (req, res) => {
       const email = req.query.email;
       // console.log(email);
@@ -73,6 +81,17 @@ async function run() {
         return res.send({ accessToken: token });
       }
       res.status(403).send({ accessToken: "" });
+    });
+    app.get("/users", async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      console.log(user);
+      if (user) {
+        return res.send({ user: user });
+      } else {
+        res.send({ user: null });
+      }
     });
     app.post("/users", async (req, res) => {
       const user = req.body;
@@ -148,33 +167,74 @@ async function run() {
       const result = await productsCollection.insertOne(product);
       res.send(result);
     });
+    // update product advertising info
+    app.put("/products", async (req, res) => {
+      const id = req.query.product;
+      if (id) {
+        const filter = { _id: ObjectId(id) };
+        const options = { upsert: true };
+        const updatedDoc = {
+          $set: {
+            isAdvertised: true,
+          },
+        };
+        const result = await productsCollection.updateOne(
+          filter,
+          updatedDoc,
+          options
+        );
+        console.log(result);
+        res.send(result);
+      }
+    });
     app.get("/users/allbuyers", async (req, res) => {
       const query = { userRole: "Buyer" };
       const allbuyers = await usersCollection.find(query).toArray();
       res.send(allbuyers);
     });
-    app.get("/users/allsellers", async (req, res) => {
+    app.get("/admin/allsellers", async (req, res) => {
       const query = { userRole: "Seller" };
       const allsellers = await usersCollection.find(query).toArray();
       res.send(allsellers);
     });
     //update a seller
-    app.put("/users/allsellers/seller/:email", async (req, res) => {
+    app.put(
+      "/users/allsellers/seller/:email",
+      verifyJWT,
+      verifyAdmin,
+      async (req, res) => {
+        const email = req.params.email;
+        const filter = { email: email };
+        const options = { upsert: true };
+        const updatedDoc = {
+          $set: {
+            isSellerVerified: true,
+          },
+        };
+        const result = await usersCollection.updateOne(
+          filter,
+          updatedDoc,
+          options
+        );
+        res.send(result);
+      }
+    );
+    // delete seller account
+    app.delete("/admin/seller/:email", async (req, res) => {
       const email = req.params.email;
-      // console.log(email);
-      const filter = { email: email };
-      const options = { upsert: true };
-      const updatedDoc = {
-        $set: {
-          isSellerVerified: true,
-        },
-      };
-      const result = await usersCollection.updateOne(
-        filter,
-        updatedDoc,
-        options
+      const userfilter = { email: email };
+      const productFilter = { seller_email: email };
+      const deleteSellerResult = await usersCollection.deleteOne(userfilter);
+      const deleteProductresult = await productsCollection.deleteMany(
+        productFilter
       );
-      console.log(result)
+      res.send([deleteSellerResult, deleteProductresult]);
+    });
+    // delete buyer
+    app.delete("/admin/buyer/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const result = await usersCollection.deleteOne(filter);
       res.send(result);
     });
     // temporary to update any field on products collections
