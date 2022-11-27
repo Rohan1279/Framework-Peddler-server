@@ -183,10 +183,17 @@ async function run() {
           updatedDoc,
           options
         );
-        console.log(result);
+        // console.log(result);
         res.send(result);
       }
     });
+    //  get all advertised products
+    app.get("/products/advertisement",async(req,res)=>{
+      const query = { isAdvertised : true}
+      const result = await productsCollection.find(query).toArray()
+      // console.log(result);
+      res.send(result)
+  })
     app.get("/users/allbuyers", async (req, res) => {
       const query = { userRole: "Buyer" };
       const allbuyers = await usersCollection.find(query).toArray();
