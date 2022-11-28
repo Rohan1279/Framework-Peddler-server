@@ -183,19 +183,25 @@ async function run() {
       const filter1 = { _id: ObjectId(id) };
       const filter2 = { _id: ObjectId(productId) };
       const options = { upsert: true };
-      const updateDoc = {
+      const updateDoc1 = {
         $set: {
           isPaid: true,
           transactionId: payment.transactionId,
         },
       };
+      const updateDoc2 = {
+        $set: {
+          isPaid: true,
+        },
+      };
+
       const updatedResult1 = await ordersCollection.updateOne(
         filter1,
-        updateDoc
+        updateDoc1
       );
       const updatedResult2 = await productsCollection.updateOne(
         filter2,
-        updateDoc,
+        updateDoc2,
         options
       );
 
@@ -245,7 +251,7 @@ async function run() {
         const options = { upsert: true };
         const updatedDoc = {
           $set: {
-            isAdvertised: true,
+            isReported: true,
           },
         };
         const result = await productsCollection.updateOne(
@@ -258,7 +264,7 @@ async function run() {
       }
     });
     //  get all advertised products
-    app.get("/products/advertisement", async (req, res) => {
+    app.get("/products/advertisement", verifyJWT, async (req, res) => {
       const query = { isAdvertised: true };
       const result = await productsCollection.find(query).toArray();
       // console.log(result);
