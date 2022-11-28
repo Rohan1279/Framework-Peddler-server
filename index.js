@@ -6,6 +6,7 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
 const { query } = require("express");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 //middleware
 app.use(cors());
@@ -50,6 +51,9 @@ async function run() {
     const ordersCollection = client
       .db("framework-peddler-db")
       .collection("orders");
+    const paymentsCollection = client
+      .db("framework-peddler-db")
+      .collection("payments");
 
     const verifySeller = async (req, res, next) => {
       const decodedEmail = req.decoded.email;
@@ -153,8 +157,37 @@ async function run() {
     app.get("/orders/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
-      const orders = await ordersCollection.find(query).toArray();
-      res.send(orders);
+      const result = await ordersCollection.findOne(query);
+      // console.log(result);
+      res.send(result);
+    });
+    app.post("/create-payment-intent", async (req, res) => {
+      const order = req.body;
+      const price = order.price;
+      const amount = price * 100;
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        currency: "usd",
+        amount: amount,
+        payment_method_types: ["card"],
+      });
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    });
+    app.post("/payments", async (req, res) => {
+      const payment = req.body;
+      const result = await paymentsCollection.insertOne(payment);
+      const id = payment.bookingId;
+      const filter = { _id: ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          isPaid: true,
+          transactionId: payment.transactionId,
+        },
+      };
+      const updatedResult = await ordersCollection.updateOne(filter, updateDoc);
+      res.send(result);
     });
     app.get("/products", async (req, res) => {
       const email = req.query.email;
