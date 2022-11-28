@@ -179,14 +179,26 @@ async function run() {
       const payment = req.body;
       const result = await paymentsCollection.insertOne(payment);
       const id = payment.bookingId;
-      const filter = { _id: ObjectId(id) };
+      const productId = payment.product_id;
+      const filter1 = { _id: ObjectId(id) };
+      const filter2 = { _id: ObjectId(productId) };
+      const options = { upsert: true };
       const updateDoc = {
         $set: {
           isPaid: true,
           transactionId: payment.transactionId,
         },
       };
-      const updatedResult = await ordersCollection.updateOne(filter, updateDoc);
+      const updatedResult1 = await ordersCollection.updateOne(
+        filter1,
+        updateDoc
+      );
+      const updatedResult2 = await productsCollection.updateOne(
+        filter2,
+        updateDoc,
+        options
+      );
+
       res.send(result);
     });
     app.get("/products", async (req, res) => {
@@ -209,6 +221,25 @@ async function run() {
     // update product advertising info
     app.put("/products", async (req, res) => {
       const id = req.query.product;
+      if (id) {
+        const filter = { _id: ObjectId(id) };
+        const options = { upsert: true };
+        const updatedDoc = {
+          $set: {
+            isAdvertised: true,
+          },
+        };
+        const result = await productsCollection.updateOne(
+          filter,
+          updatedDoc,
+          options
+        );
+        // console.log(result);
+        res.send(result);
+      }
+    });
+    app.put("/products/reportproduct", async (req, res) => {
+      const id = req.query.reportproduct;
       if (id) {
         const filter = { _id: ObjectId(id) };
         const options = { upsert: true };
