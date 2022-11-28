@@ -86,7 +86,7 @@ async function run() {
       const email = req.query.email;
       const query = { email: email };
       const user = await usersCollection.findOne(query);
-      console.log(user);
+      // console.log(user);
       if (user) {
         return res.send({ user: user });
       } else {
@@ -150,6 +150,12 @@ async function run() {
       const orders = await ordersCollection.find(query).toArray();
       res.send(orders);
     });
+    app.get("/orders/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const orders = await ordersCollection.find(query).toArray();
+      res.send(orders);
+    });
     app.get("/products", async (req, res) => {
       const email = req.query.email;
       // console.log(email);
@@ -188,12 +194,12 @@ async function run() {
       }
     });
     //  get all advertised products
-    app.get("/products/advertisement",async(req,res)=>{
-      const query = { isAdvertised : true}
-      const result = await productsCollection.find(query).toArray()
+    app.get("/products/advertisement", async (req, res) => {
+      const query = { isAdvertised: true };
+      const result = await productsCollection.find(query).toArray();
       // console.log(result);
-      res.send(result)
-  })
+      res.send(result);
+    });
     app.get("/users/allbuyers", async (req, res) => {
       const query = { userRole: "Buyer" };
       const allbuyers = await usersCollection.find(query).toArray();
@@ -245,19 +251,22 @@ async function run() {
       res.send(result);
     });
     // temporary to update any field on products collections
-    // app.get("/users", async (req, res) => {
+    // app.get("/reportedproducts", async (req, res) => {
     //   const filter = {};
     //   const options = { upsert: true };
     //   const updatedDoc = {
     //     $set: {
-    //       isVerified: false,
+    //       isReported: false,
     //     },
     //   };
+    //   // const result = await productsCollection.find(filter).toArray();
+
     //   const result = await productsCollection.updateMany(
     //     filter,
     //     updatedDoc,
     //     options
     //   );
+    //   console.log(result);
     //   res.send(result);
     // });
   } finally {
