@@ -153,6 +153,7 @@ async function run() {
 
       res.send(products);
     });
+
     app.get("/category/:id", async (req, res) => {
       const id = req.params.id;
       // console.log(id);
@@ -245,8 +246,35 @@ async function run() {
       const result = await productsCollection.insertOne(product);
       res.send(result);
     });
-    // update product advertising info
-
+    app.put("/products", verifyJWT, verifySeller, async (req, res) => {
+      const product = req.body;
+      const filter = { _id: ObjectId(product._id) };
+      const option = { upsert: true };
+      console.log(product);
+      const updatedDoc = {
+        $set: {
+          category_id: product?.category_id,
+          category_name: product?.category_name,
+          condition: product?.condition,
+          description: product?.description,
+          location: product?.location,
+          original_price: product?.original_price,
+          picture: product?.picture,
+          product_name: product?.product_name,
+          resale_price: product?.resale_price,
+          seller_phone: product?.seller_phone,
+          usage_period: product?.usage_period,
+          year_purchased: product?.year_purchased,
+        },
+      };
+      const result = await productsCollection.updateOne(
+        filter,
+        updatedDoc,
+        option
+      );
+      console.log(result);
+      res.send(result);
+    });
     app.put("/products/reportproduct", async (req, res) => {
       const id = req.query.reportproduct;
       if (id) {
