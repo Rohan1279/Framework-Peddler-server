@@ -275,14 +275,37 @@ async function run() {
       console.log(result);
       res.send(result);
     });
-    app.put("/products/reportproduct", async (req, res) => {
-      const id = req.query.reportproduct;
+    app.put("/products/reportproduct/:id", async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
       if (id) {
         const filter = { _id: ObjectId(id) };
         const options = { upsert: true };
         const updatedDoc = {
           $set: {
             isReported: true,
+          },
+        };
+        const result = await productsCollection.updateOne(
+          filter,
+          updatedDoc,
+          options
+        );
+        // console.log(result);
+        res.send(result);
+      }
+    });
+    app.put("/products/advertise/:id", async (req, res) => {
+      // const id = req.query;
+      const id = req.params.id;
+      console.log(id);
+
+      if (id) {
+        const filter = { _id: ObjectId(id) };
+        const options = { upsert: true };
+        const updatedDoc = {
+          $set: {
+            isAdvertised: true,
           },
         };
         const result = await productsCollection.updateOne(
